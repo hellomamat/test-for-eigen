@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Book {
+  code   String @id @db.VarChar(32)
+  title  String @db.VarChar(255)
+  author String @db.VarChar(255)
+  stock  Int    @default(0)
+
+  borrowings Borrowing[]
+
+  @@map("books")
+}
+
+model Member {
+  code           String    @id @db.VarChar(32)
+  name           String    @db.VarChar(255)
+  penalizedUntil DateTime? @db.Timestamptz(6)
+
+  borrowings Borrowing[]
+
+  @@map("members")
+}
+
+model Borrowing {
+  id         String    @id @default(uuid()) @db.Uuid
+  memberCode String    @db.VarChar(32)
+  bookCode   String    @db.VarChar(32)
+  borrowedAt DateTime  @db.Timestamptz(6)
+  returnedAt DateTime? @db.Timestamptz(6)
+
+  member Member @relation(fields: [memberCode], references: [code], onDelete: Cascade)
+  book   Book   @relation(fields: [bookCode], references: [code], onDelete: Cascade)
+
+  @@index([bookCode, returnedAt])
+  @@index([memberCode, returnedAt])
+  @@map("borrowings")
+}
